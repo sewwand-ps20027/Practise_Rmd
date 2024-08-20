@@ -1,0 +1,104 @@
+---
+title: "Model_Selection"
+author: "W.H.Sewwandi(PS/2020/027)"
+date: "2024-08-20"
+output: html_document
+---
+
+```{r}
+library(leaps)
+library(dplyr)
+library(tidyr)
+library(Metrics)
+
+#Important dataset
+df<-read.csv("C:\\Users\\USER\\Downloads\\DataSet.csv")
+head(df)
+
+#Check missing values
+sum(is.na(df))
+
+#Fit a model
+model1<-lm(Satisfaction ~ . ,data = df)
+summary(model1)
+
+M1<-regsubsets(Satisfaction ~ . ,data = df)
+summary(M1)
+
+M2<-regsubsets(Satisfaction ~ . ,data = df,nvmax = 11)
+M2_summary<-summary(M2)
+M2_summary
+
+par(mfrow=c(1,2))
+plot(M2_summary$rss,xlab = "Number of variables",ylab = "RSS",type = "l")
+min_Rss<-which.min(M2_summary$rss)
+points(min_Rss,M2_summary$rss[min_Rss],col="blue",cex=2,pch=20)
+abline(v=min_Rss)
+
+plot(M2_summary$adjr2,xlab = "Number of variables",ylab = "Adjusted_RSq",type = "l")
+max_Adj<-which.max(M2_summary$adjr2)
+points(max_Adj,M2_summary$adjr2[max_Adj],col="red",cex=2,pch=20)
+abline(v=max_Adj)
+
+par(mfrow=c(1,2))
+plot(M2_summary$cp,xlab = "Number of variables",ylab = "Cp",type = "l")
+min_cp<-which.min(M2_summary$cp)
+points(min_cp,M2_summary$cp[min_cp],col="blue",cex=2,pch=20)
+abline(v=min_cp)
+
+plot(M2_summary$bic,xlab = "Number of variables",ylab = "BIC",type = "l")
+min_bic<-which.min(M2_summary$bic)
+points(min_bic,M2_summary$bic[min_bic],col="red",cex=2,pch=20)
+abline(v=min_bic)
+
+summary_table<-data.frame(Model=1:11,RSS=M2_summary$rss,AdjR2=M2_summary$adjr2,Cp=M2_summary$cp,BIC=M2_summary$bic)
+summary_table
+
+
+
+coef(M2,min_cp)   #Coefficients of min_cp model
+
+coef(M2,min_bic)   #Coefficients of min_bic model
+
+coef(M2,max_Adj)   #Coefficients of max_Adj model
+
+######################  Forward selection #######################
+
+model_Forward<-regsubsets(Satisfaction ~ . ,data = df,nvmax = 11,method = "forward")
+f1<-summary(model_Forward)
+f1
+criterion<-data.frame(model=1:11,Adjr2=f1$adjr2,RSS=f1$rss,Cp=f1$cp,BIC=f1$bic)
+criterion
+
+library(ggplot2)
+
+ggplot(criterion,aes(model))+geom_line(aes(y=Adjr2,colour="Adjr2"))+geom_line(aes(y=RSS,colour="RSS"))+geom_line(aes(y=Cp,colour="Cp"))+geom_line(aes(y=BIC,colour="BIC"))
+
+criterion_std<-cbind(model=criterion$model,scale(criterion[,-1]))
+criterion_std
+ggplot(criterion_std,aes(model))+geom_line(aes(y=Adjr2,colour="Adjr2"))+geom_line(aes(y=RSS,colour="RSS"))+geom_line(aes(y=Cp,colour="Cp"))+geom_line(aes(y=BIC,colour="BIC"))
+
+better_model3 <- lm(Satisfaction~ProdQual+Ecom+CompRes+ProdLine+SalesFImage+
+OrdBilling,data=df )
+summary(better_model3)
+
+par(mfrow=c(2,2))
+plot(better_model3)
+
+
+######################  Backward selection #######################
+
+model_backward<-regsubsets(Satisfaction ~ . ,data = df,nvmax = 11,method = "backward")
+summary(model_backward)
+
+
+###################### Stepwise regression model ##################
+library(MASS)
+
+model_step<-lm(Satisfaction ~.,data = df)
+step_modle<-stepAIC(model_step,direction = "both",trace = TRUE)
+step_modle
+summary(step_modle)
+
+```
+

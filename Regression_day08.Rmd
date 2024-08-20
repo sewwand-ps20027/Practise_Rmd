@@ -1,0 +1,107 @@
+---
+title: "Practical_day_9"
+author: "W.H.Sewwandi(PS/2020/027)"
+date: "2024-08-16"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+
+################# If response is a catergorical variable #############################
+
+#Import data set
+df <- read.csv("C:/Users/USER/Downloads/diabetes.csv")
+head(df)   #Here Outcome and Impact are catergorical variables.Outcome is a response variable.
+
+#Convert catergorical variables into factors
+Outcome<-as.factor(df$Outcome)
+Impact<-as.factor(df$Impact)
+head(df)
+
+#Splitting data into two parts.(Training and testing)
+set.seed(1000)
+split_ratio<-0.9  #Split Ratio
+
+df1_bound<-ceiling(nrow(df)*split_ratio)
+df1_bound
+
+train1<-df %>% slice_sample(n=df1_bound,replace=FALSE)
+test1<-df[-as.numeric(rownames(train1)),]
+
+head(train1)
+head(test1)
+
+model1<-glm(Outcome ~ Glucose + BloodPressure + BMI + Age + Impact,data = df,family = "binomial"(link = logit))
+summary(model1)
+
+# By dropping insignificant variables
+model_new<-glm(Outcome ~ Glucose +  BMI +   Impact,data = df,family = "binomial"(link = logit))
+summary(model_new)
+
+############## Multicorllinearity############################
+library(car)
+vif(model_new)
+
+exp(coef(model_new))
+
+
+######### Likelihood Ratio Test
+
+null<-glm(Outcome ~ 1, data = train1,family = "binomial"(link = logit))
+md1<-glm(Outcome ~ Glucose, data = train1,family = "binomial"(link = logit))
+md2<-glm(Outcome ~ BMI, data = train1,family = "binomial"(link = logit))
+md3<-glm(Outcome ~ Impact, data = train1,family = "binomial"(link = logit))
+
+anova(null,md1,test="Chisq")
+anova(null,md2,test="Chisq")
+anova(null,md3,test="Chisq")
+
+#highest deviance goes to Impact
+md11<-glm(Outcome ~ Impact, data = train1,family = "binomial"(link = logit))
+md21<-glm(Outcome ~ Impact+BMI, data = train1,family = "binomial"(link = logit))
+md31<-glm(Outcome ~ Impact+Glucose, data = train1,family = "binomial"(link = logit))
+
+anova(md11,md21,test="Chisq")
+anova(md11,md31,test="Chisq")
+
+#Highest deviance goes to Impact+Glucose
+md32<-glm(Outcome ~ Impact+Glucose, data = train1,family = "binomial"(link = logit))
+md33<-glm(Outcome ~ Impact+Glucose+BMI, data = train1,family = "binomial"(link = logit))
+anova(md32,md33,test="Chisq")
+
+################ Model evaluation part
+head(test1)
+
+#Creating sub data frame
+sub_test<-test1[,c("Outcome","Impact","BMI","Glucose")]
+
+#Display the sub data set
+head(sub_test)
+
+#Make predictions
+prediction<-predict(model_new,newdata = sub_test,type = "response")
+prediction
+
+prediction_category<-ifelse(prediction>=0.5,"1","0")
+
+#Display catergorized predictions
+prediction_category
+
+# Creating a confusion matrix
+confusion_matrix<-table(sub_test$Outcome,prediction_category)
+confusion_matrix
+
+#Calculation of acuracy
+accuracy<-(sum(diag(confusion_matrix))/sum(confusion_matrix))*100
+accuracy
+
+Misclassification_rate<- 1-accuracy
+Misclassification_rate
+
+Presition<-confusion_matrix[2,2]/(confusion_matrix[1,2]+confusion_matrix[2,2])*100
+Presition
+
+
+```
+

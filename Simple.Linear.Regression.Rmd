@@ -1,0 +1,103 @@
+---
+title: "Simple_Linear_Regression"
+author: "W.H.Sewwandi(PS/2020/027)"
+date: "2024-08-17"
+output: html_document
+---
+
+```{r}
+#1. Import the given dataset into R
+f1<-read.csv("C:\\Users\\USER\\Desktop\\University\\Year_3\\1_sem\\STAT_31631\\data.csv")
+head(f1)
+
+#2. Check whether there are missing values.
+x<-sum(is.na(f1))
+print(paste("Number of missing values is ",x))
+
+#3.Check the linearity between two variables.
+plot(f1$X,f1$Y,main = "Scatterplot",xlab = "X",ylab = "Y")
+#There seems to be strong positive linear relationship between X and Y
+
+#4. Calculate the corrected sum of squares for y, x, and the corrected sum of cross products for x and y.
+Mean_x<-mean(f1$X)    #mean of x
+Mean_y<-mean(f1$Y)    #mean of y
+S_xx<-sum((f1$X-Mean_x)^2)    #sum of squares for x
+S_xx
+
+S_yy<-sum((f1$Y-Mean_y)^2)     #sum of squares for y
+S_yy
+
+S_xy<-sum((f1$X-Mean_x)*(f1$Y-Mean_y))
+S_xy
+
+#5. Calculate the sample correlation coefficients
+Sc<-cor(f1$X,f1$Y)
+print(paste("Sample correlation of X and Y is ",Sc))
+
+#6.Estimate the regression coefficients 𝛽1 and 𝛽2
+#manually
+
+beta_1<-S_xy/S_xx
+beta_1                      #beta_1
+beta_0<-Mean_y-(beta_1*Mean_x)
+beta_0                       #beta_0
+
+#using R function
+#fitted model is y_hat= beta_0+beta_1*X
+model1<-lm(Y ~ X ,data = f1)
+summary(model1)
+
+#We got same answers using two methods.Then beta_0 is 15.3451 and beta_1 is 1.9468
+# That means, when predictor variable of X is zero then y is 15.3451 and when X is increasing by one unit then y increases by 1.9468 units.
+
+#7 Calculate the 95% confidence intervals for the slope and intercept.
+confint(model1)
+#beta_0 is within  (12.012720 ,18.677487) the interval
+#beta_1 is within   (1.624532, 2.268995) the interval
+
+#Manually
+SSE<-sum(model1$residuals^2)
+SSE
+n<-nrow(f1)
+n
+p<-length(coefficients(model1))
+p
+sigma_sq_hat<-SSE/n-p
+
+alpha<-0.05
+dff<-n-2
+cr<-qt(1-alpha/2,dff)
+
+b1_up<-beta_1+cr*sqrt(sigma_sq_hat/S_xx)
+b1_low<-beta_1-cr*sqrt(sigma_sq_hat/S_xx)
+print(paste("Confidence interval of beta_1 : ","[",b1_low,",",b1_up,"]"))
+
+
+b0_up<-beta_0+cr*sqrt((sigma_sq_hat*sum(f1$X^2))/(n*S_xx))
+b0_low<-beta_0-cr*sqrt((sigma_sq_hat*sum(f1$X^2))/(n*S_xx))
+print(paste("Confidence interval of beta_0 : ","[",b0_low,",",b0_up,"]"))
+
+
+
+#8 Conduct hypothesis tests for both estimators to check their significance.
+summary(model1)
+#Hypothesis test for beta_0
+#H0:beta_0=0
+#H1:beta_0  not equal to zero
+#According to the model summary p value of beta_0 is less than 0.05 So we can reject H0 Therefore beta_0 is significant at 5% significance level.
+
+#Hypothesis test for beta_1
+#H0:beta_1=0
+#H1:beta_1  not equal to zero
+#According to the model summary p value of beta_1 is less than 0.05 So we can reject H0 Therefore beta_1 is significant at 5% significance level.
+
+
+
+
+
+
+
+
+
+```
+

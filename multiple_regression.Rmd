@@ -1,0 +1,92 @@
+---
+title: "Multiple_Linear_Regression"
+author: "W.H.Sewwandi(PS/2020/027)"
+date: "2024-08-18"
+output: html_document
+---
+
+```{r}
+#Import gala data set
+library(faraway)
+head(gala)
+#1. Taking subset from data  set
+s1<-gala[,-c(1,2)]
+s1
+
+#2.Create matrix X
+X<-as.matrix(cbind(1,s1))
+X
+
+#3.“Species” as the response variable and assign it to the variable Y
+
+Y<-gala$Species
+Y
+
+#4.Calculate the matrix 𝑋𝑇⋅ 𝑋 and find its inverse.
+Xt_x<-t(X) %*% X      #XT.X
+Xt_x
+
+Inverse<-solve(Xt_x)   #Inverse
+Inverse
+
+#5. alculate the matrix 𝑋T.Y
+Xt_y<-t(X)%*%Y
+Xt_y
+
+#6. Calculate the estimators for the fitted model
+#manually
+beta<-Inverse%*%Xt_y
+beta
+
+#by using model
+model1<-lm(Species ~ Area + Elevation + Nearest + Scruz + Adjacent,data = gala)
+summary(model1)
+
+# 7.Estimate 𝜎 using the estimator.
+n=nrow(s1) 
+n      #No of observations
+p=length(coefficients(model1))
+p     #No of estimators
+sigma<-sqrt(sum(model1$residuals^2)/(n-p))
+sigma
+#8.Obtain the standard errors for the coefficients.
+
+sqrt(diag(Inverse))*sigma
+
+# 9. Determine the t-values for the estimates.
+M11<-c(19.15419782, 0.02242235, 0.05366280, 1.05413595,0.21540225 ,0.01770019)
+beta11<-matrix(c(7.068220709,
+ -0.023938338, 0.319464761, 0.009143961,
+-0.240524230, -0.074804832),ncol=1)
+
+M1_diag<-diag(M11)
+M1_diag
+M1_inverse<-solve(M1_diag)
+result<-M1_inverse %*%beta11
+result
+
+#The above way is used to calculate t values manually.We can get these answers using model summary
+
+#10. Compute the multiple R-squared value.
+r_square<-1-sum(model1$residuals^2)/sum((Y-mean(Y))^2)
+r_square
+
+#11.Evaluate the overall significance of the fitted model using the F statistic and p-value.
+
+#Hypothesis tests
+#H0:beta1=beta=....=0
+#H1:At least one does not equal to zero
+
+RSS_alt<-t((Y-X %*% beta)) %*% (Y-X %*% beta)
+RSS_alt
+
+RSS_null<-t(Y-mean(Y)) %*% (Y-mean(Y))
+RSS_null
+
+F_value<-((RSS_null-RSS_alt)/(6-1))/((RSS_alt)/(30-6))
+F_value
+
+1-pf(F_value,5,24)
+
+```
+
